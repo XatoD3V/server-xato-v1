@@ -1,0 +1,18 @@
+{
+  "name": "xato-server-dev",
+  "version": "1.0.0",
+  "description": "Xato S3erver Dev - 3 servidores de sesiones de WhatsApp con el bot Xato Ds",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js"
+  },
+  "engines": { "node": ">=18" },
+  "dependencies": {
+    "@whiskeysockets/baileys": "^6.7.9",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "pino": "^9.0.0",
+    "qrcode": "^1.5.4"
+  },
+  "license": "MIT"
+}

@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Xato S3erver Dev</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo" data-icon="bot" data-size="20"></span>
+      <span class="brand-name">Xato S3erver Dev</span>
+    </div>
+    <div class="top-actions">
+      <span id="adminBadge" class="chip hidden"><span data-icon="shield" data-size="14"></span>Administrador</span>
+      <button id="adminBtn" class="btn ghost"><span data-icon="shield" data-size="16"></span><span id="adminBtnText">Admin</span></button>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <h1>Vincula tu numero a <span class="grad">Xato Ds</span></h1>
+      <p>Registra tu numero, escanea el QR desde WhatsApp y tu bot automatico queda activo.</p>
+    </section>
+
+    <section class="grid-servers" id="servers"></section>
+
+    <section class="card register">
+      <div class="card-head">
+        <span class="icon-box" data-icon="qr" data-size="18"></span>
+        <div><h2>Nuevo registro</h2><p class="muted">Numero con codigo de pais, sin el signo +. Ejemplo: 51912345678</p></div>
+      </div>
+      <div class="form-row">
+        <label class="input">
+          <span data-icon="phone" data-size="16"></span>
+          <input id="number" type="tel" inputmode="numeric" placeholder="51912345678" autocomplete="off">
+        </label>
+        <button id="registerBtn" class="btn primary"><span data-icon="qr" data-size="16"></span>Generar QR</button>
+      </div>
+      <p id="formMsg" class="msg hidden"></p>
+    </section>
+
+    <section id="adminPanel" class="card admin hidden">
+      <div class="card-head">
+        <span class="icon-box" data-icon="shield" data-size="18"></span>
+        <div><h2>Modo administrador</h2><p class="muted">Sesiones registradas en los 3 servidores</p></div>
+        <button id="reloadBtn" class="btn ghost small right"><span data-icon="refresh" data-size="15"></span>Actualizar</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Servidor</th><th>Numero</th><th>Estado</th><th></th></tr></thead>
+          <tbody id="adminRows"></tbody>
+        </table>
+      </div>
+      <p id="adminEmpty" class="muted center hidden">No hay sesiones registradas.</p>
+    </section>
+  </main>
+
+  <footer>Xato S3erver Dev &middot; Bot Xato Ds</footer>
+
+  <!-- Modal QR -->
+  <div id="qrModal" class="modal hidden">
+    <div class="modal-card">
+      <button class="close" id="qrClose" aria-label="Cerrar"><span data-icon="x" data-size="18"></span></button>
+      <div id="qrBody"></div>
+    </div>
+  </div>
+
+  <!-- Modal login admin -->
+  <div id="loginModal" class="modal hidden">
+    <div class="modal-card small">
+      <button class="close" id="loginClose" aria-label="Cerrar"><span data-icon="x" data-size="18"></span></button>
+      <div class="card-head">
+        <span class="icon-box" data-icon="shield" data-size="18"></span>
+        <div><h2>Acceso administrador</h2><p class="muted">Ingresa la clave del servidor</p></div>
+      </div>
+      <label class="input"><span data-icon="lock" data-size="16"></span>
+        <input id="adminPass" type="password" placeholder="Clave" autocomplete="current-password">
+      </label>
+      <p id="loginMsg" class="msg hidden"></p>
+      <button id="loginBtn" class="btn primary full">Entrar</button>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
