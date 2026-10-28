@@ -28,25 +28,64 @@ Abre **http://localhost:3000**
 
 Las sesiones se guardan en `data/` (ignorado por Git) y se reconectan solas al reiniciar.
 
-## Comandos del bot (prefijo `!`)
-| Comando | Funcion |
+## Registro obligatorio
+Nadie puede usar el bot hasta registrarse:
+```
+!reg nombre.edad        ejemplo: !reg Juan.20
+```
+Al registrarse recibe un mensaje de **registro exitoso** con la imagen `assets/registro.jpg`, un ID unico y 500 monedas de bono. Quien escribe un comando sin registro recibe el aviso de acceso restringido con las instrucciones. Los datos se guardan por servidor en `data/serverN/db.json`.
+
+## Comandos del bot (prefijo `!`) - 100 comandos
+| Categoria | Comandos |
 |---|---|
-| `!menu` | Muestra el menu con la imagen `assets/menu.jpg` y envia el audio `assets/menu.mp3` |
-| `!ping` | Latencia |
-| `!info` | Datos del bot y del servidor |
-| `!hora` | Fecha y hora (Lima) |
-| `!id` | ID del chat |
+| General | `!menu` (imagen + lista + audio), `!ping`, `!info`, `!servidor`, `!id`, `!owner`, `!reglas`, `!estado` |
+| Registro | `!reg`, `!unreg`, `!perfil` (nivel, XP, monedas) |
+| Economia | `!saldo`, `!diario`, `!trabajar`, `!apostar`, `!tienda`, `!comprar`, `!transferir`, `!top` |
+| Juegos | `!ahorcado`, `!trivia`, `!adivina`, `!ppt` |
+| Diversion | `!dado`, `!moneda`, `!elegir`, `!bola`, `!frase`, `!ship`, `!matrimonio` |
+| Grupos | `!grupo`, `!tagall`, `!kick`, `!add`, `!promote`, `!demote`, `!antilink`, `!bienvenida`, `!despedida`, `!silenciar`, `!abrir`, `!advertir`, `!perdonar`, `!sorteo`, `!link` |
+| Utilidades | `!calc`, `!say` |
+| Matematicas | `!suma`, `!resta`, `!multiplicacion`, `!division`, `!potencia`, `!raiz`, `!porcentaje` |
+| Finanzas | `!cambio`, `!dolar`, `!euro`, `!cripto`, `!igv` |
+| Mundo | `!hora` (por pais), `!paises`, `!clima` |
+| Informacion | `!noticias`, `!sismo`, `!feriados`, `!pais`, `!ip`, `!pelicula`, `!serie`, `!musica`, `!letra`, `!inflacion`, `!pbi` |
+| Multimedia | `!imagen` (IA), `!sticker` (imagen o video), `!toimg`, `!tts`, `!qr`, `!blanconegro`, `!blur`, `!invertir`, `!meme` |
+| Descargas | `!tiktok`, `!ytmp3`, `!ytmp4`, `!play`, `!instagram`, `!facebook`, `!dl` |
+| Herramientas | `!traducir`, `!wiki`, `!convertir`, `!clave` |
+| Estudio | `!ia`, `!resumir`, `!corregir`, `!recordatorio`, `!alarma` |
+| Owner | `!modo publico/privado`, `!broadcast` |
+
+Los comandos de grupo de administracion (`kick`, `add`, `promote`, etc.) exigen que quien los use sea admin del grupo y que el bot tambien lo sea. `!antilink on` borra enlaces y suma advertencias; a las 3 expulsa. `!bienvenida` y `!despedida` estan activas por defecto.
+
+### Bienvenida y menu juntos
+El mensaje de bienvenida de los grupos usa el mismo estilo del menu (negritas, cursivas, emojis), incluye la imagen, el aviso de `!reg nombre.edad`, la lista de categorias del bot y el credito **Desarrollador: Xato D3v**.
+
+### Servicios publicos usados (sin API key)
+open.er-api.com (divisas), CoinGecko (cripto), wttr.in (clima), MyMemory (traductor), Wikipedia, Google Noticias RSS, USGS (sismos), Nager.Date (feriados), REST Countries, ipwho.is, iTunes Search (peliculas, series, musica), lyrics.ovh, BCRP y Banco Mundial (inflacion y PBI), Pollinations (imagenes e IA, limite ~1 peticion/15 s sin clave) y TikWM (TikTok). Si alguno cambia, solo ese comando avisa del error.
+
+### Descargas (YouTube, Instagram, Facebook...)
+No existe una API publica estable para YouTube, asi que `!ytmp3`, `!ytmp4`, `!play`, `!instagram`, `!facebook` y `!dl` usan **yt-dlp** instalado en tu equipo (y **ffmpeg** para audio MP3 y stickers de video):
+```bash
+pip install -U yt-dlp        # o descarga el binario desde github.com/yt-dlp/yt-dlp
+# ffmpeg: https://ffmpeg.org/download.html  (Termux: pkg install ffmpeg)
+```
+Sin yt-dlp esos comandos avisan que falta instalarlo; `!tiktok` funciona igual por TikWM. Limite 60 MB por archivo y 20 s de espera entre descargas.
+
+### Variables extra (.env)
+- `OWNER_NUMBERS`: numeros dueños adicionales (con codigo de pais, separados por coma). La cuenta vinculada siempre es dueña.
+- `POLLINATIONS_KEY`: clave gratuita opcional para subir el limite de la IA.
 
 ### Agregar un comando nuevo
-Edita `src/bot/commands.js` y agrega un objeto al arreglo:
+Crea o edita un archivo en `src/bot/cmds/` (o `src/bot/commands.js`) y agrega un objeto al arreglo. Opciones: `noReg`, `group`, `admin`, `botAdmin`, `owner`:
 ```js
 {
   name: 'hola',
+  cat: 'Diversion',
   desc: 'Saluda al usuario',
-  async run({ reply }) { await reply('Hola, soy Xato Ds'); },
+  async run({ reply, user }) { await reply(`Hola ${user.name}, soy Xato Ds`); },
 }
 ```
-El menu se actualiza solo.
+Usa `cat` para agrupar el comando en el menu. El menu se actualiza solo.
 
 ## Estructura
 ```
@@ -57,7 +96,7 @@ xato-server-dev/
     index.js       arranca los 3 servidores y el panel
     gateway.js     API publica + admin
     node-server.js un servidor de sesiones
-    bot/           session-manager, handler y commands
+    bot/           session-manager, handler, db, style, commands.js y cmds/ (comandos por categoria)
   data/            sesiones (no se sube a Git)
 ```
 
@@ -73,4 +112,4 @@ git push -u origin main
 
 ## Avisos
 - Este proyecto usa Baileys, una libreria **no oficial** de WhatsApp Web. Usalo con cuidado: WhatsApp puede limitar numeros que hagan spam o abuso.
-- `assets/menu.jpg` y `assets/menu.mp3` son obras con derechos de autor. Si el repositorio es publico, considera usar contenido propio o libre de derechos.
+- `assets/menu.jpg`, `assets/registro.jpg` y `assets/menu.mp3` son obras con derechos de autor. Si el repositorio es publico, considera usar contenido propio o libre de derechos.

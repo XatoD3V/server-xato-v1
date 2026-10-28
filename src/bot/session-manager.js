@@ -4,6 +4,9 @@ const QRCode = require('qrcode');
 const pino = require('pino');
 const baileys = require('@whiskeysockets/baileys');
 const { handleMessage } = require('./handler');
+const { onParticipants } = require('./group-events');
+const { Store } = require('./db');
+const reminders = require('./reminders');
 
 const makeWASocket = baileys.default;
 const { useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion, Browsers } = baileys;
@@ -21,6 +24,7 @@ class SessionManager {
     this.live = new Map();
     this.logger = pino({ level: 'silent' });
     fs.mkdirSync(dir, { recursive: true });
+    this.store = new Store(path.join(dir, 'db.json'));
   }
 
   // Cada carpeta dentro de /data/serverN es un registro (cupo ocupado).
@@ -92,6 +96,7 @@ class SessionManager {
         entry.qr = null;
         entry.everConnected = true;
         console.log(`[server ${this.serverId}] ${entry.number} conectado`);
+        reminders.restore(() => entry.sock, this.store, entry.number);
       }
       if (connection === 'close') {
         const code = lastDisconnect && lastDisconnect.error && lastDisconnect.error.output
@@ -115,8 +120,14 @@ class SessionManager {
     sock.ev.on('messages.upsert', ({ messages, type }) => {
       if (type !== 'notify') return;
       for (const m of messages) {
-        handleMessage(sock, m, { serverId: this.serverId }).catch((e) => console.error('error de comando:', e.message));
+        handleMessage(sock, m, {
+          serverId: this.serverId, store: this.store, botNumber: entry.number, getSock: () => entry.sock,
+        }).catch((e) => console.error('error de comando:', e.message));
       }
+    });
+
+    sock.ev.on('group-participants.update', (ev) => {
+      onParticipants(sock, ev, this.store).catch((e) => console.error('error de bienvenida:', e.message));
     });
   }
 

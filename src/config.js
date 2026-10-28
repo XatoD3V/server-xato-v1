@@ -4,6 +4,10 @@ const path = require('path');
 const config = {
   brand: 'Xato S3erver Dev',
   botName: 'Xato Ds',
+  developer: 'Xato D3v',
+  owners: (process.env.OWNER_NUMBERS || '').split(',').map((n) => n.replace(/\D/g, '')).filter(Boolean),
+  regBonus: 500,
+  aiKey: process.env.POLLINATIONS_KEY || '',
   servers: 3,
   maxPerServer: Number(process.env.MAX_PER_SERVER) || 5,
   panelPort: Number(process.env.PANEL_PORT) || 3000,
