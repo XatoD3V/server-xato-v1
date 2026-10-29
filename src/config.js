@@ -8,6 +8,13 @@ const config = {
   owners: (process.env.OWNER_NUMBERS || '').split(',').map((n) => n.replace(/\D/g, '')).filter(Boolean),
   regBonus: 500,
   aiKey: process.env.POLLINATIONS_KEY || '',
+  // APIs de descarga (opcionales). Sin clave se usan alternativas gratuitas o yt-dlp.
+  dl: {
+    url: (process.env.DL_API_URL || 'https://api.stellarwa.xyz').replace(/\/$/, ''),
+    key: process.env.DL_API_KEY || '',
+    url2: (process.env.DL_API2_URL || 'https://api.evogb.org').replace(/\/$/, ''),
+    key2: process.env.DL_API2_KEY || '',
+  },
   servers: 3,
   maxPerServer: Number(process.env.MAX_PER_SERVER) || 5,
   panelPort: Number(process.env.PANEL_PORT) || 3000,

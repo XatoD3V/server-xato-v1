@@ -114,7 +114,7 @@ module.exports = [
     },
   },
   {
-    name: 'musica', aliases: ['spotify', 'cancion'], cat: CAT, desc: 'Busca una cancion + avance de 30s',
+    name: 'musica', aliases: ['cancion'], cat: CAT, desc: 'Busca una cancion + avance de 30s',
     async run({ sock, m, jid, args, reply, prefix }) {
       const q = args.join(' ').trim();
       if (!q) return reply(`Uso: ${prefix}musica Bad Bunny Monaco`);

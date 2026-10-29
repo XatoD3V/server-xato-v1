@@ -35,7 +35,7 @@ Nadie puede usar el bot hasta registrarse:
 ```
 Al registrarse recibe un mensaje de **registro exitoso** con la imagen `assets/registro.jpg`, un ID unico y 500 monedas de bono. Quien escribe un comando sin registro recibe el aviso de acceso restringido con las instrucciones. Los datos se guardan por servidor en `data/serverN/db.json`.
 
-## Comandos del bot (prefijo `!`) - 100 comandos
+## Comandos del bot (prefijo `!`) - 106 comandos
 | Categoria | Comandos |
 |---|---|
 | General | `!menu` (imagen + lista + audio), `!ping`, `!info`, `!servidor`, `!id`, `!owner`, `!reglas`, `!estado` |
@@ -50,7 +50,7 @@ Al registrarse recibe un mensaje de **registro exitoso** con la imagen `assets/r
 | Mundo | `!hora` (por pais), `!paises`, `!clima` |
 | Informacion | `!noticias`, `!sismo`, `!feriados`, `!pais`, `!ip`, `!pelicula`, `!serie`, `!musica`, `!letra`, `!inflacion`, `!pbi` |
 | Multimedia | `!imagen` (IA), `!sticker` (imagen o video), `!toimg`, `!tts`, `!qr`, `!blanconegro`, `!blur`, `!invertir`, `!meme` |
-| Descargas | `!tiktok`, `!ytmp3`, `!ytmp4`, `!play`, `!instagram`, `!facebook`, `!dl` |
+| Descargas | `!play`, `!play2`, `!tiktok`, `!tiktokmp3`, `!facebook`, `!instagram`, `!twitter`, `!mediafire`, `!spotify`, `!pinterest`, `!apk`, `!ytsearch`, `!dl` |
 | Herramientas | `!traducir`, `!wiki`, `!convertir`, `!clave` |
 | Estudio | `!ia`, `!resumir`, `!corregir`, `!recordatorio`, `!alarma` |
 | Owner | `!modo publico/privado`, `!broadcast` |
@@ -61,19 +61,38 @@ Los comandos de grupo de administracion (`kick`, `add`, `promote`, etc.) exigen 
 El mensaje de bienvenida de los grupos usa el mismo estilo del menu (negritas, cursivas, emojis), incluye la imagen, el aviso de `!reg nombre.edad`, la lista de categorias del bot y el credito **Desarrollador: Xato D3v**.
 
 ### Servicios publicos usados (sin API key)
-open.er-api.com (divisas), CoinGecko (cripto), wttr.in (clima), MyMemory (traductor), Wikipedia, Google Noticias RSS, USGS (sismos), Nager.Date (feriados), REST Countries, ipwho.is, iTunes Search (peliculas, series, musica), lyrics.ovh, BCRP y Banco Mundial (inflacion y PBI), Pollinations (imagenes e IA, limite ~1 peticion/15 s sin clave) y TikWM (TikTok). Si alguno cambia, solo ese comando avisa del error.
+open.er-api.com (divisas), CoinGecko (cripto), wttr.in (clima), MyMemory (traductor), Wikipedia, Google Noticias RSS, USGS (sismos), Nager.Date (feriados), REST Countries, ipwho.is, iTunes Search (peliculas, series, musica), lyrics.ovh, BCRP y Banco Mundial (inflacion y PBI), Pollinations (imagenes e IA, limite ~1 peticion/15 s sin clave) y TikWM (TikTok), FxTwitter (X) y yt-search (busqueda en YouTube). Si alguno cambia, solo ese comando avisa del error.
 
-### Descargas (YouTube, Instagram, Facebook...)
-No existe una API publica estable para YouTube, asi que `!ytmp3`, `!ytmp4`, `!play`, `!instagram`, `!facebook` y `!dl` usan **yt-dlp** instalado en tu equipo (y **ffmpeg** para audio MP3 y stickers de video):
+### Descargas
+| Comando | Que descarga | Sin clave de API |
+|---|---|---|
+| `!play`, `!ytmp3` | Audio de YouTube (busca por nombre o enlace, con ficha y miniatura) | Necesita yt-dlp |
+| `!play2`, `!ytmp4` | Video de YouTube | Necesita yt-dlp |
+| `!tiktok` (`--mp3` para audio), `!tiktokmp3` | TikTok sin marca de agua | Funciona (TikWM) |
+| `!facebook`, `!fb` | Video de Facebook | Necesita yt-dlp |
+| `!instagram`, `!ig`, `!reel` | Reels, posts y carruseles | Necesita yt-dlp |
+| `!twitter`, `!x` | Videos e imagenes de X/Twitter | Funciona (FxTwitter) |
+| `!mediafire`, `!mf` | Archivos de Mediafire (hasta 2 GB, el tope de WhatsApp) | Funciona (enlace directo) |
+| `!spotify`, `!sp` | Cancion de Spotify por nombre o enlace | Necesita clave de API |
+| `!pinterest`, `!pin` | Imagen o video de un pin (con clave tambien busca por texto) | Funciona con enlace |
+| `!apk` | Aplicaciones APK desde Aptoide (hasta 2 GB, el tope de WhatsApp) | Funciona |
+| `!ytsearch`, `!yts` | Lista de videos de YouTube con enlaces | Funciona |
+| `!dl` | Otros sitios compatibles con yt-dlp | Necesita yt-dlp |
+
+Cada comando prueba en este orden: **API configurada**, luego **alternativa gratuita** y por ultimo **yt-dlp** instalado en el equipo. Para que YouTube, Facebook, Instagram y Spotify funcionen de forma estable elige una de estas dos opciones:
+
+1. **API (rapida):** en el `.env` completa `DL_API_KEY` (YouTube, Facebook, Spotify, Mediafire, TikTok) y `DL_API2_KEY` (Instagram). Son servicios de terceros: consigue tu propia clave en sus paginas (`DL_API_URL` y `DL_API2_URL` ya traen las direcciones) y ten en cuenta que pueden cambiar o caerse.
+2. **yt-dlp (propia):** instala yt-dlp y ffmpeg en el servidor:
 ```bash
-pip install -U yt-dlp        # o descarga el binario desde github.com/yt-dlp/yt-dlp
+pip install -U yt-dlp        # o el binario de github.com/yt-dlp/yt-dlp
 # ffmpeg: https://ffmpeg.org/download.html  (Termux: pkg install ffmpeg)
 ```
-Sin yt-dlp esos comandos avisan que falta instalarlo; `!tiktok` funciona igual por TikWM. Limite 60 MB por archivo y 20 s de espera entre descargas.
+Limites: sin tope propio de tamaño (solo el de WhatsApp, ~2 GB), 15 s de espera entre descargas por usuario y 3 descargas a la vez.
 
 ### Variables extra (.env)
 - `OWNER_NUMBERS`: numeros dueños adicionales (con codigo de pais, separados por coma). La cuenta vinculada siempre es dueña.
 - `POLLINATIONS_KEY`: clave gratuita opcional para subir el limite de la IA.
+- `DL_API_URL`, `DL_API_KEY`, `DL_API2_URL`, `DL_API2_KEY`: APIs de descarga (ver seccion Descargas).
 
 ### Agregar un comando nuevo
 Crea o edita un archivo en `src/bot/cmds/` (o `src/bot/commands.js`) y agrega un objeto al arreglo. Opciones: `noReg`, `group`, `admin`, `botAdmin`, `owner`:
