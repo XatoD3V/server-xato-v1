@@ -2,19 +2,26 @@ const fs = require('fs');
 const path = require('path');
 const QRCode = require('qrcode');
 const pino = require('pino');
-const baileys = require('@whiskeysockets/baileys');
+const baileys = require('./baileys');
 const { handleMessage } = require('./handler');
 const { onParticipants } = require('./group-events');
 const { Store } = require('./db');
 const reminders = require('./reminders');
 
-const makeWASocket = baileys.default;
-const { useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion, Browsers } = baileys;
 
 const QR_WINDOW_MS = 3 * 60 * 1000; // tiempo para escanear antes de liberar el cupo
 
 const httpError = (status, message) => Object.assign(new Error(message), { status });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+// Cache sencilla con limite (para mensajes enviados y metadatos de grupos)
+class Cache {
+  constructor(max = 2000) { this.max = max; this.m = new Map(); }
+  get(k) { return this.m.get(k); }
+  set(k, v) { this.m.delete(k); this.m.set(k, v); if (this.m.size > this.max) this.m.delete(this.m.keys().next().value); }
+  del(k) { this.m.delete(k); }
+  flushAll() { this.m.clear(); }
+}
 
 class SessionManager {
   constructor({ serverId, dir, max }) {
@@ -66,20 +73,53 @@ class SessionManager {
   }
 
   async start(entry) {
-    const { state, saveCreds } = await useMultiFileAuthState(path.join(this.dir, entry.number));
+    const B = await baileys.load();
+    const { state, saveCreds } = await B.useMultiFileAuthState(path.join(this.dir, entry.number));
     let version;
-    try { ({ version } = await fetchLatestBaileysVersion()); } catch { /* usa la version por defecto */ }
+    try { ({ version } = await B.fetchLatestBaileysVersion()); } catch { /* usa la version por defecto */ }
 
-    const sock = makeWASocket({
+    // Caches persistentes durante las reconexiones de esta sesion
+    entry.msgCache = entry.msgCache || new Cache(3000);
+    entry.groupCache = entry.groupCache || new Cache(500);
+    const retryCache = entry.retryCache || (entry.retryCache = new Cache(5000));
+    const FULL = B.proto && B.proto.HistorySync && B.proto.HistorySync.HistorySyncType
+      ? B.proto.HistorySync.HistorySyncType.FULL : 0;
+
+    const sock = B.makeWASocket({
       version,
-      auth: state,
+      auth: {
+        creds: state.creds,
+        keys: B.makeCacheableSignalKeyStore ? B.makeCacheableSignalKeyStore(state.keys, this.logger) : state.keys,
+      },
       logger: this.logger,
-      browser: Browsers.macOS('Xato Ds'),
+      browser: B.Browsers.macOS('Chrome'),
       printQRInTerminal: false,
       markOnlineOnConnect: false,
-      syncFullHistory: false,
+      // Permite el sync necesario para grupos y LID, pero no baja el historial completo
+      shouldSyncHistoryMessage: ({ syncType }) => syncType !== FULL,
+      msgRetryCounterCache: retryCache,
+      cachedGroupMetadata: async (jid) => entry.groupCache.get(jid),
+      getMessage: async (key) => {
+        const hit = entry.msgCache.get(`${key.remoteJid}:${key.id}`);
+        return hit ? hit.message : undefined;
+      },
     });
     entry.sock = sock;
+
+    // Guarda lo que el bot envia (reintentos de grupos) y cachea metadatos de grupo
+    const send = sock.sendMessage.bind(sock);
+    sock.sendMessage = async (...args) => {
+      const res = await send(...args);
+      if (res && res.key && res.message) entry.msgCache.set(`${res.key.remoteJid}:${res.key.id}`, res);
+      return res;
+    };
+    const gm = sock.groupMetadata.bind(sock);
+    sock.groupMetadata = async (jid) => {
+      const meta = await gm(jid);
+      entry.groupCache.set(jid, meta);
+      return meta;
+    };
+    sock.ev.on('groups.update', (list) => { for (const g of list || []) if (g.id) entry.groupCache.del(g.id); });
 
     sock.ev.on('creds.update', saveCreds);
 
@@ -102,7 +142,7 @@ class SessionManager {
         const code = lastDisconnect && lastDisconnect.error && lastDisconnect.error.output
           ? lastDisconnect.error.output.statusCode : undefined;
 
-        if (code === DisconnectReason.loggedOut) {
+        if (code === B.DisconnectReason.loggedOut) {
           console.log(`[server ${this.serverId}] ${entry.number} cerro sesion desde el telefono`);
           return this.remove(entry.number);
         }
@@ -118,15 +158,20 @@ class SessionManager {
     });
 
     sock.ev.on('messages.upsert', ({ messages, type }) => {
+      for (const m of messages) {
+        if (m.key && m.message && m.key.id) entry.msgCache.set(`${m.key.remoteJid}:${m.key.id}`, m);
+        if (process.env.DEBUG) console.log(`[server ${this.serverId}] upsert(${type}) ${m.key && m.key.remoteJid} fromMe=${m.key && m.key.fromMe}`);
+      }
       if (type !== 'notify') return;
       for (const m of messages) {
         handleMessage(sock, m, {
           serverId: this.serverId, store: this.store, botNumber: entry.number, getSock: () => entry.sock,
-        }).catch((e) => console.error('error de comando:', e.message));
+        }).catch((e) => console.error('error de comando:', e.stack || e.message));
       }
     });
 
     sock.ev.on('group-participants.update', (ev) => {
+      entry.groupCache.del(ev.id);
       onParticipants(sock, ev, this.store).catch((e) => console.error('error de bienvenida:', e.message));
     });
   }

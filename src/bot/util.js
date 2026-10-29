@@ -25,7 +25,7 @@ const getBuffer = async (url, opts) => {
 // Descarga el medio del propio mensaje o del mensaje al que se responde.
 // kinds: ['imageMessage', 'stickerMessage', ...]
 async function getMedia(sock, m, kinds) {
-  const { downloadMediaMessage } = require('@whiskeysockets/baileys');
+  const { downloadMediaMessage } = await require('./baileys').load();
   const pino = require('pino');
   const content = unwrap(m.message);
   if (!content) return null;

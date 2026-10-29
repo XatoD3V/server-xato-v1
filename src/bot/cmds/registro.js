@@ -9,8 +9,8 @@ const REG_IMG = path.join(config.assetsDir, 'registro.jpg');
 module.exports = [
   {
     name: 'reg', aliases: ['registrar', 'registro'], cat: 'Registro', noReg: true, desc: 'Registrate (!reg nombre.edad)',
-    async run({ sock, m, jid, text, args, sender, store, reply, prefix }) {
-      if (store.user(sender)) return reply(`✅ Ya estas registrado.\nUsa *${prefix}perfil* para ver tus datos o *${prefix}unreg* para borrar tu registro.`);
+    async run({ sock, m, jid, text, args, sender, user: already, store, reply, prefix }) {
+      if (already) return reply(`✅ Ya estas registrado.\nUsa *${prefix}perfil* para ver tus datos o *${prefix}unreg* para borrar tu registro.`);
 
       const input = args.join(' ');
       const dot = input.lastIndexOf('.');
@@ -30,8 +30,8 @@ module.exports = [
   },
   {
     name: 'unreg', aliases: ['borrarregistro'], cat: 'Registro', desc: 'Borra tu registro',
-    async run({ sender, store, reply }) {
-      store.deleteUser(sender);
+    async run({ user, store, reply }) {
+      store.deleteUser(user.id);
       await reply('🗑️ Tu registro fue eliminado. Puedes volver a registrarte con *!reg nombre.edad*.');
     },
   },

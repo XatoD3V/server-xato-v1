@@ -5,7 +5,7 @@
 Plataforma de **3 servidores** de sesiones de WhatsApp, cada uno con un limite de **5 registros** (15 en total), y el bot automatico **Xato Ds**. El usuario escribe su numero, el sistema genera un QR y al escanearlo desde WhatsApp el bot queda activo. Incluye modo administrador para eliminar sesiones.
 
 ## Requisitos
-- Node.js 18 o superior
+- Node.js 20 o superior
 - Git instalado (algunas dependencias de Baileys se descargan desde GitHub)
 
 ## Instalacion
@@ -16,6 +16,15 @@ cp .env.example .env      # en Windows: copy .env.example .env
 npm start
 ```
 Abre **http://localhost:3000**
+
+## Si el bot no responde en grupos
+1. Ejecuta `npm install` otra vez: el proyecto ahora usa **Baileys 7**, la version que entiende los IDs `@lid` que WhatsApp usa en los grupos (requiere Node 20+).
+2. Vuelve a vincular el numero: en el panel entra como Admin, elimina la sesion y escanea un QR nuevo. Asi WhatsApp envia al bot los datos de grupos y LID.
+3. Verifica que el bot sea miembro del grupo y que no este silenciado el chat en el telefono vinculado.
+4. Pon `DEBUG=1` en el `.env`, reinicia (`pm2 restart xato`) y mira `pm2 logs xato`:
+   - Si ves lineas `upsert(notify) ...@g.us`, los mensajes llegan; revisa el registro con `!reg nombre.edad`.
+   - Si no aparece nada al escribir en el grupo, es un problema de conexion de la sesion: repite el paso 2.
+5. Cada comando ejecutado se imprime en el log como `!comando de NUMERO (grupo|privado)`.
 
 ## Como funciona
 | Parte | Descripcion |
