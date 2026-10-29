@@ -42,7 +42,7 @@ Nadie puede usar el bot hasta registrarse:
 ```
 !reg nombre.edad        ejemplo: !reg Juan.20
 ```
-Al registrarse recibe un mensaje de **registro exitoso** con la imagen `assets/registro.jpg`, un ID unico y 500 monedas de bono. Quien escribe un comando sin registro recibe el aviso de acceso restringido con las instrucciones. Los datos se guardan por servidor en `data/serverN/db.json`.
+Al registrarse recibe un mensaje de **registro exitoso** con **su propia foto de perfil de WhatsApp** (si es privada o no tiene, se usa `assets/registro.jpg`), un ID unico y 500 monedas de bono. Quien escribe un comando sin registro recibe el aviso de acceso restringido con las instrucciones. Los datos se guardan por servidor en `data/serverN/db.json`.
 
 ## Comandos del bot (prefijo `!`) - 106 comandos
 | Categoria | Comandos |

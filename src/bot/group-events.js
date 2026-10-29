@@ -4,16 +4,14 @@ const path = require('path');
 const config = require('../config');
 const style = require('./style');
 const commands = require('./commands');
-const { num, getBuffer } = require('./util');
+const { num, getProfilePicture } = require('./util');
 
 const IMG = path.join(config.assetsDir, 'menu.jpg');
 
-// Foto de perfil del integrante; si es privada o no tiene, devuelve la imagen del menu.
+// Foto de perfil del integrante; si es privada o no tiene, usa la imagen del menu.
 async function profileImage(sock, id) {
-  try {
-    const url = await sock.profilePictureUrl(id, 'image');
-    if (url) return (await getBuffer(url, { timeout: 15000 })).buffer;
-  } catch { /* privada o sin foto */ }
+  const photo = await getProfilePicture(sock, id);
+  if (photo) return photo;
   return fs.existsSync(IMG) ? fs.readFileSync(IMG) : null;
 }
 

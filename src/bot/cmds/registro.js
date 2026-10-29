@@ -3,13 +3,14 @@ const path = require('path');
 const config = require('../../config');
 const style = require('../style');
 const { levelFor, xpForLevel } = require('../db');
+const { getProfilePicture } = require('../util');
 
 const REG_IMG = path.join(config.assetsDir, 'registro.jpg');
 
 module.exports = [
   {
     name: 'reg', aliases: ['registrar', 'registro'], cat: 'Registro', noReg: true, desc: 'Registrate (!reg nombre.edad)',
-    async run({ sock, m, jid, text, args, sender, user: already, store, reply, prefix }) {
+    async run({ sock, m, jid, text, args, sender, senderIds, user: already, store, reply, prefix }) {
       if (already) return reply(`✅ Ya estas registrado.\nUsa *${prefix}perfil* para ver tus datos o *${prefix}unreg* para borrar tu registro.`);
 
       const input = args.join(' ');
@@ -24,7 +25,10 @@ module.exports = [
 
       const u = store.createUser(sender, { name, age });
       const caption = style.regSuccess(u);
-      if (fs.existsSync(REG_IMG)) await sock.sendMessage(jid, { image: fs.readFileSync(REG_IMG), caption }, { quoted: m });
+      // Foto de perfil de WhatsApp del usuario; si es privada o no tiene, usa la imagen por defecto
+      const photo = await getProfilePicture(sock, senderIds);
+      if (photo) await sock.sendMessage(jid, { image: photo, caption }, { quoted: m });
+      else if (fs.existsSync(REG_IMG)) await sock.sendMessage(jid, { image: fs.readFileSync(REG_IMG), caption }, { quoted: m });
       else await reply(caption);
     },
   },

@@ -60,6 +60,17 @@ async function getMedia(sock, m, kinds) {
 const norm = (s) => String(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
 const fmtNum = (n) => String(Math.round(n * 1e8) / 1e8);
 
+// Foto de perfil de WhatsApp (prueba cada ID); devuelve null si es privada o no tiene.
+async function getProfilePicture(sock, ids) {
+  for (const id of [].concat(ids).filter(Boolean)) {
+    try {
+      const url = await sock.profilePictureUrl(id, 'image');
+      if (url) return (await getBuffer(url, { timeout: 15000 })).buffer;
+    } catch { /* privada, sin foto o ID no valido */ }
+  }
+  return null;
+}
+
 const getText = async (url, opts) => (await fetchWithTimeout(url, opts)).text();
 
 // ---- identidad y permisos ----
@@ -112,6 +123,6 @@ const fmtTime = (ms) => {
 };
 
 module.exports = {
-  unwrap, getJson, getText, getBuffer, getMedia, norm, fmtNum,
+  unwrap, getJson, getText, getBuffer, getMedia, getProfilePicture, norm, fmtNum,
   num, sameUser, getContext, getQuotedText, getTargets, isAdminIn, cooldown, pick, rand, fmtTime,
 };
